@@ -20,14 +20,14 @@ class part {
     private:
     string key[2] = {"part", "endpart"};
     int nKey = sizeof(key)/sizeof(*key);
-    int keyStat[sizeof(key)/sizeof(*key)] = {};
-    // int* keyStat = new int[nKey];
+    int keyFlag[sizeof(key)/sizeof(*key)] = {};
+    // int* keyFlag = new int[nKey];
 
     int id; string name;
     string param[2] = {"id", "name"};
     int nParam = sizeof(param)/sizeof(*param);
-    int paramStat[sizeof(param)/sizeof(*param)] = {};
-    // int* paramStat = new int[nParam];
+    int paramFlag[sizeof(param)/sizeof(*param)] = {};
+    // int* paramFlag = new int[nParam];
 
     public:
     part() {}
@@ -35,36 +35,35 @@ class part {
     string getKey(int i) {
         return key[i-1];
     }
-    int getKeyStat(int i) {
-        return keyStat[i-1];
+    bool needKey() {
+        int keyFlagSum = 0;
+        for(int i=0; i<nKey; i++) {
+            keyFlagSum = keyFlagSum+keyFlag[i];
+        }
+        if(keyFlagSum==1 & keyFlagSum<nKey) return true; 
+        else return false;
     }
-    void toggleKeyStat(int i) {
-        keyStat[i-1] = !keyStat[i-1];
+    void flipKeyFlag(int i) {
+        keyFlag[i-1] = !keyFlag[i-1];
     }
     string getParam(int i) {
         return param[i-1];
     }
-    int getParamStat(int i) {
-        return paramStat[i-1];
-    }
-    void toggleParamStat(int i) {
-        paramStat[i-1] = !paramStat[i-1];
-    }
     bool needParam() {
-        int paramStatSum = 0;
+        int paramFlagSum = 0;
         for(int i=0; i<nParam; i++) {
-            paramStatSum = paramStatSum+paramStat[i];
+            paramFlagSum = paramFlagSum+paramFlag[i];
         }
-        if(paramStatSum==nParam) return false; 
+        if(paramFlagSum==nParam) return false; 
         else return true;
     }
-    void setParamVal(string inpParam, string val) {
+    void setParam(string inpParam, string val) {
         if(inpParam==param[0]) {
             id = stoi(val);
-            paramStat[0] = 1;
+            paramFlag[0] = 1;
         } else if(inpParam==param[1]) {
             name = val;
-            paramStat[1] = 1;
+            paramFlag[1] = 1;
         }
     }
     void printData() {
@@ -76,63 +75,79 @@ class model {
     private:
     string key[2] = {"model", "endmodel"};
     int nKey = sizeof(key)/sizeof(*key);
-    int* keyStat = new int[nKey];
+    int* keyFlag = new int[nKey];
 
     int id, dim; string name;
     string param[3] = {"id", "dim", "name"};
     int nParam = sizeof(param)/sizeof(*param);
-    int* paramStat = new int[nParam];
+    int* paramFlag = new int[nParam];
     
     vector<part> parts;
 
     public:
-    model() {}
+    model() {
+        parts.emplace_back();
+    }
     ~model() {}
     string getKey(int i) {
         return key[i-1];
     }
-    int getKeyStat(int i) {
-        return keyStat[i-1];
+    bool needKey() {
+        int keyFlagSum = 0;
+        for(int i=0; i<nKey; i++) {
+            keyFlagSum = keyFlagSum+keyFlag[i];
+        }
+        if(keyFlagSum==1 & keyFlagSum<nKey) return true; 
+        else return false;
     }
-    void toggleKeyStat(int i) {
-        keyStat[i-1] = !keyStat[i-1];
+    void flipKeyFlag(int i) {
+        keyFlag[i-1] = !keyFlag[i-1];
     }
     string getParam(int i) {
         return param[i-1];
     }
-    int getParamStat(int i) {
-        return paramStat[i-1];
-    }
-    void toggleParamStat(int i) {
-        paramStat[i-1] = !paramStat[i-1];
-    }
     bool needParam() {
-        int paramStatSum = 0;
+        int paramFlagSum = 0;
         for(int i=0; i<nParam; i++) {
-            paramStatSum = paramStatSum+paramStat[i];
+            paramFlagSum = paramFlagSum+paramFlag[i];
         }
-        if(paramStatSum==nParam) return false; 
+        if(paramFlagSum==nParam) return false; 
         else return true;
     }
-    void setParamVal(string inpParam, string val) {
+    void setParam(string inpParam, string val) {
         if(inpParam==param[0]) {
             id = stoi(val);
-            paramStat[0] = 1;
+            paramFlag[0] = 1;
         } else if(inpParam==param[1]) {
             dim = stoi(val);
-            paramStat[1] = 1;
+            paramFlag[1] = 1;
         } else if(inpParam==param[2]) {
             name = val;
-            paramStat[2] = 1;
+            paramFlag[2] = 1;
         }
     }
-    void pushPart(part thisPart) {
-        parts.push_back(thisPart);
+    string getPartKey(int i) {
+        return parts.back().getKey(i);
+    }
+    bool needPartKey() {
+        return parts.back().needKey();
+    }
+    void flipPartKeyFlag(int i) {
+        parts.back().flipKeyFlag(i);
+    }
+    bool needPartParam() {
+        return parts.back().needParam();
+    }
+    void setPartParam(string inpParam, string val) {
+        parts.back().setParam(inpParam, val);
+    }
+    void initNewPart() {
+        parts.emplace_back();
     }
     void printData() {
         cout << "Model: id=" << id << ", dim=" << dim << ", name=" << name <<endl;
-        cout << "Contains " << parts.size() << " part(s):" << endl;
-        for (int i=0; i<parts.size(); i++) {
+        cout << "Contains " << parts.size()-1 << " part(s):" << endl;
+        for (int i=0; i<parts.size()-1; i++) {
             cout << "> Part-" << i+1 << ": ";
             parts[i].printData();
         }
@@ -142,16 +157,19 @@ class model {
 class session {
     private:
     vector<model> models;
+    // vector<analysis> analyses;
     string commentStr = "//";
+    char delimitComma = ',', delimitEqual = '=';
 
     public:
+    session() {
+        models.emplace_back();
+    };
+    ~session() {};
     void readInputFile(string fileName) {
         ifstream inputFile;
         inputFile.open(fileName);
         if (inputFile.is_open()) {
-            model thisModel;
-            part thisPart;
-            char delimitComma = ',', delimitEqual = '=';
             string thisLine, valComma, valEqual;
             regex delLineSpace("\\n+|\\s+");
             while (getline(inputFile, thisLine)) {
@@ -159,40 +177,44 @@ class session {
                 stringstream lineStream1(thisLine);
                 while (getline(lineStream1, valComma, delimitComma)) {
                     // model
-                    if (valComma==thisModel.getKey(1) & thisModel.getKeyStat(1)==0) {
-                        thisModel.toggleKeyStat(1);
-                    } else if (thisModel.getKeyStat(1)==1 & thisModel.needParam()) {
+                    if (!models.back().needKey() & valComma==models.back().getKey(1)) {
+                        // cout << "in_model_1" <<endl;
+                        models.back().flipKeyFlag(1);
+                    } else if (models.back().needKey() & models.back().needParam()) {
+                        // cout << "in_model_2" <<endl;
                         stringstream lineStream2(valComma);
                         getline(lineStream2, valEqual, delimitEqual);
-                        thisModel.setParamVal(valEqual, valComma.substr(valComma.find(delimitEqual) + 1));
-                    } else if (valComma==thisModel.getKey(2) & (thisModel.getKeyStat(1)==1 & thisModel.getKeyStat(2)==0)) {
-                        thisModel.toggleKeyStat(1);
-                        thisModel.toggleKeyStat(2);
-                        models.push_back(thisModel);
-                        thisModel = model();
-                    } else if (valComma==thisModel.getKey(1) & (thisModel.getKeyStat(1)==1 & thisModel.getKeyStat(2)==0)) { 
-                        cout << "ERROR! Current model reading not finished but new model is being added." << endl;
+                        models.back().setParam(valEqual, valComma.substr(valComma.find(delimitEqual) + 1));
+                    } else if (models.back().needKey() & valComma==models.back().getKey(2)) {
+                        // cout << "in_model_3" <<endl;
+                        models.back().flipKeyFlag(1);
+                        models.back().flipKeyFlag(2);
+                    } else if (models.back().needKey() & valComma==models.back().getKey(1)) {
+                        // cout << "in_model_4" <<endl;
+                        cout << "ERROR! Tried to read new model without ending current model." << endl;
                     } 
                     // part
-                    if (valComma==thisPart.getKey(1) & thisPart.getKeyStat(1)==0) {
-                        thisPart.toggleKeyStat(1);
-                    } else if (thisPart.getKeyStat(1)==1 & thisPart.needParam()) {
+                    if (!models.back().needPartKey() & valComma==models.back().getPartKey(1)) {
+                        // cout << "in_part_1" <<endl;
+                        models.back().flipPartKeyFlag(1);
+                    } else if (models.back().needPartKey() & models.back().needPartParam()) {
+                        // cout << "in_part_2" <<endl;
                         stringstream lineStream2(valComma);
                         getline(lineStream2, valEqual, delimitEqual);
-                        // cout <<"inhere";
-                        thisPart.setParamVal(valEqual, valComma.substr(valComma.find(delimitEqual) + 1));
-                    } else if (valComma==thisPart.getKey(2) & (thisPart.getKeyStat(1)==1 & thisPart.getKeyStat(2)==0)) {
-                        thisPart.toggleKeyStat(1);
-                        thisPart.toggleKeyStat(2);
-                        thisModel.pushPart(thisPart);
-                        thisPart = part();
-                    } else if (valComma==thisPart.getKey(1) & (thisPart.getKeyStat(1)==1 & thisPart.getKeyStat(2)==0)) { 
-                        cout << "ERROR! Current part reading not finished but new part is being added." << endl;
+                        models.back().setPartParam(valEqual, valComma.substr(valComma.find(delimitEqual) + 1));
+                    } else if (models.back().needPartKey() & valComma==models.back().getPartKey(2)) {
+                        // cout << "in_part_3" <<endl;
+                        models.back().flipPartKeyFlag(1);
+                        models.back().flipPartKeyFlag(2);
+                        models.back().initNewPart();
+                    } else if (models.back().needPartKey() & valComma==models.back().getPartKey(1)) {
+                        // cout << "in_part_4" <<endl;
+                        cout << "ERROR! Tried to read new part without ending current part." << endl;
                     }
                 }
             }
-            models[0].printData();
             inputFile.close();
+            models[0].printData();
         } else {
             cout << "ERROR! File not found.";
         }
